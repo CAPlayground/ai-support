@@ -32,8 +32,13 @@ export const commands = [
     .setDescription('Re-index server messages for training (enkei64 only)'),
 
   new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Check bot latency'),
+
+  new SlashCommandBuilder()
     .setName('help')
     .setDescription('Show help information about the bot'),
 ];
 
 export const commandsJSON = commands.map(command => command.toJSON());
+

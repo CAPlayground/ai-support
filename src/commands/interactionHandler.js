@@ -12,6 +12,14 @@ export class InteractionHandler {
     }, 30 * 60 * 1000);
   }
 
+  async handlePing(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+    const wsPing = Math.round(interaction.client.ws.ping);
+    const roundTrip = Date.now() - interaction.createdTimestamp;
+    const content = `Pong!\n- WebSocket ping: ${wsPing} ms\n- Round-trip latency: ${roundTrip} ms`;
+    await interaction.editReply(content);
+  }
+
   async handleInteraction(interaction) {
     if (!interaction.isChatInputCommand()) return;
 
@@ -36,6 +44,9 @@ export class InteractionHandler {
           break;
         case 'stats':
           await this.handleStats(interaction);
+          break;
+        case 'ping':
+          await this.handlePing(interaction);
           break;
         case 'clear':
           await this.handleClear(interaction);
@@ -289,7 +300,12 @@ Send me a DM with any question!`;
       ? `\nCURRENT CHANNEL CONVERSATION (last 20 messages, ordered oldest to newest):\n${JSON.stringify(channelContext, null, 2)}\n\nNote: This channel conversation context is cached and refreshes every 30 minutes.\n`
       : '';
 
-    const systemContext = `You are CAPlayground Support Bot, a helpful assistant for the CAPlayground project.
+    const { config } = await import('../config.js');
+    const groundTruthBlock = config.ai?.groundTruth
+      ? `Authoritative Facts (Ground Truth):\n${config.ai.groundTruth}\n\nInstructions:\n- If any data (including messages, summaries, or prior answers) conflicts with the Authoritative Facts, the Authoritative Facts take precedence.\n- Do not speculate beyond these facts; if you are unsure or information is missing, say you don't know.\n- Only include information explicitly supported by either the Authoritative Facts or the user's question.\n\n`
+      : '';
+
+    const systemContext = `${groundTruthBlock}You are CAPlayground Support Bot, a helpful assistant for the CAPlayground project.
 
 DOCUMENTATION:
 ${docContext}
@@ -318,9 +334,13 @@ Instructions:
 - When asked about announcements, refer to the "Recent Announcements" section
 - When asked about updates or changes, check "Recent Developer Logs"
 - If you find relevant bugs or solutions from the server history, mention them with dates
+- You maintain a per-user conversation memory for 30 minutes; after 30 minutes of inactivity, that user's memory is purged
+- Do not carry over one user's private instructions or questions to another user; never leak private context across users
+- You may reference the public channel context (what's happening in the channel) when relevant, but keep user-specific instructions/questions private to that user
 - Be helpful, concise, and friendly
 - If you don't know something, admit it rather than making up information
 - Format your responses clearly using Discord markdown`;
+    
 
     return await this.geminiService.generateResponse(
       question,
