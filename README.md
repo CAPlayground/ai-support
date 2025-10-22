@@ -1,6 +1,6 @@
 # CAPlayground Support Bot
 
-A Discord support bot for CAPlayground, powered by Google Gemini AI with documentation knowledge and self-training capabilities. Fully made my Claude 4.5 Sonnet.
+A Discord support bot for CAPlayground, powered by Google Gemini AI with documentation knowledge and self-training capabilities. Fully made by Claude 4.5 Sonnet.
 
 ## Setup
 
